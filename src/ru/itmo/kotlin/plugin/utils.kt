@@ -7,9 +7,7 @@ import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
 import org.jetbrains.kotlin.ir.expressions.addArgument
 import org.jetbrains.kotlin.name.FqName
 
-fun String.toFQN(): FqName = FqName("org.jetbrains.kotlin.fir.plugin.$this")
-
-
+fun String.toFQN(): FqName = FqName("org.itmo.logging.plugin.$this")
 
 
 fun IrStringConcatenation.addAsString(builder: IrBuilderWithScope, data: String)

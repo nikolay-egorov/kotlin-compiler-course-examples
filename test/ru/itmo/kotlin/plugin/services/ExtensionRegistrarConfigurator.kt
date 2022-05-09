@@ -7,13 +7,16 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.EnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.TestServices
+import ru.itmo.kotlin.plugin.LoggingPluginFirExtensionRegistrar
 import ru.itmo.kotlin.plugin.SimplePluginRegistrar
-import ru.itmo.kotlin.plugin.ir.SimpleIrBodyGenerator
 import ru.itmo.kotlin.plugin.ir.SimpleIrGenerationExtension
 
 class ExtensionRegistrarConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun registerCompilerExtensions(project: Project, module: TestModule, configuration: CompilerConfiguration) {
         FirExtensionRegistrar.registerExtension(project, SimplePluginRegistrar())
         IrGenerationExtension.registerExtension(project, SimpleIrGenerationExtension())
+
+        FirExtensionRegistrar.registerExtension(project, LoggingPluginFirExtensionRegistrar())
+        // IrGenerationExtension.registerExtension(project, SimpleIrGenerationExtension())
     }
 }

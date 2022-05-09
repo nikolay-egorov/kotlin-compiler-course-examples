@@ -3,6 +3,7 @@ package ru.itmo.kotlin.plugin.fir.generator
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirPluginKey
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
+import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
 import org.jetbrains.kotlin.fir.extensions.predicate.has
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
@@ -40,5 +41,16 @@ class LoggerFieldGenerator(session: FirSession) : FirDeclarationGenerationExtens
         // if (matchedClassSymbol.superConeTypes.any { it.customAnnotations.contains() })
 
         return listOf(buildLoggerProperty(matchedClassSymbol, callableId, Key).symbol)
+    }
+
+    override fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>): Set<Name> {
+        return when (classSymbol) {
+            in matchedClasses -> setOf(LOGGER_NAME)
+            else -> emptySet()
+        }
+    }
+
+    override fun FirDeclarationPredicateRegistrar.registerPredicates() {
+        register(PREDICATE)
     }
 }
