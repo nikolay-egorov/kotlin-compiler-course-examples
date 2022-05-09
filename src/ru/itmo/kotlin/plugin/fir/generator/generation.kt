@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.runtime.structure.classId
 import org.jetbrains.kotlin.fir.FirFunctionTarget
+import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.builder.generateAccessorsByDelegate
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -25,12 +26,14 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildComponentCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildFunctionCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildReturnExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpression
+import org.jetbrains.kotlin.fir.expressions.impl.FirLazyExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.lightTree.converter.nameAsSafeName
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.references.builder.buildImplicitThisReference
+import org.jetbrains.kotlin.fir.references.builder.buildResolvedCallableReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.defaultType
@@ -48,15 +51,16 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import ru.itmo.kotlin.plugin.logger.CustomLogger
+import ru.itmo.kotlin.plugin.logger.Logger
 
-@OptIn(SymbolInternals::class)
+@OptIn(SymbolInternals::class, FirImplementationDetail::class)
 fun FirDeclarationGenerationExtension.buildLoggerProperty(
     matchedClassSymbol: FirClassLikeSymbol<*>,
     callableId: CallableId,
     key: FirPluginKey
 ): FirProperty {
     return buildProperty {
-        resolvePhase = FirResolvePhase.BODY_RESOLVE
+        resolvePhase = FirResolvePhase.TYPES
         moduleData = session.moduleData
         origin = key.origin
         status = FirResolvedDeclarationStatusImpl(
@@ -66,7 +70,7 @@ fun FirDeclarationGenerationExtension.buildLoggerProperty(
         )
         val resolvedReturnTypeRef = buildResolvedTypeRef {
             type = ConeClassLikeTypeImpl(
-                ConeClassLikeLookupTagImpl(CustomLogger.Logger::class.java.classId),
+                ConeClassLikeLookupTagImpl(Logger::class.java.classId),
                 emptyArray(),
                 isNullable = false
             )
@@ -81,22 +85,21 @@ fun FirDeclarationGenerationExtension.buildLoggerProperty(
         }
         isVar = false
         isLocal = false
-        val defaultConstructor = CustomLogger.Logger::class.java.declaredConstructors.first()
+        val builtGetter = buildPropertyAccessor {
+            isGetter = true
+            moduleData = session.moduleData
+            origin = key.origin
+            returnTypeRef = resolvedReturnTypeRef
+            status = FirResolvedDeclarationStatusImpl(
+                Visibilities.Public,
+                Modality.FINAL,
+                EffectiveVisibility.Public
+            )
+            symbol = FirPropertyAccessorSymbol()
+        }
 
-        // initializer = buildFunctionCall {
-        //     source = resolvedReturnTypeRef.source
-        //     typeRef = resolvedReturnTypeRef
-        //     calleeReference = buildSimpleNamedReference {
-        //         name = defaultConstructor.name.nameAsSafeName()
-        //     }
-        //     argumentList = buildUnaryArgumentList(
-        //         buildThisReceiverExpression {
-        //             calleeReference = buildImplicitThisReference {
-        //                 boundSymbol = matchedClassSymbol
-        //             }
-        //             source = matchedClassSymbol.source
-        //         }
-        //     )
-        // }
+        getter = builtGetter
+
+        // delegate = FirLazyExpression(builtGetter.source)
     }
 }

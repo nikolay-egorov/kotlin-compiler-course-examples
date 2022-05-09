@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.name.FqName
 
 fun String.toFQN(): FqName = FqName("org.itmo.logging.plugin.$this")
 
+const val defaultBodyOffSet = -1
+
 
 fun IrStringConcatenation.addAsString(builder: IrBuilderWithScope, data: String)
     = addArgument(builder.irString(data))

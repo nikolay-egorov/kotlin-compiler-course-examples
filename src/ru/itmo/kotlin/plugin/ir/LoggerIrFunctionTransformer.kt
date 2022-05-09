@@ -24,17 +24,18 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.statements
 import org.jetbrains.kotlin.name.FqName
 import ru.itmo.kotlin.plugin.addAsString
+import ru.itmo.kotlin.plugin.defaultBodyOffSet
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
 import ru.itmo.kotlin.plugin.toFQN
 import ru.itmo.kotlin.plugin.logger.CustomLogger
+import ru.itmo.kotlin.plugin.logger.Logger
 
 class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTransformerForGenerator(pluginContext) {
     companion object {
         private const val methodLogAnnotation: String = "ToLogFunction"
-        private const val defaultBodyOffSet = -1
     }
 
-    private val loggerField = context.referenceClass(FqName(CustomLogger.Logger::class.java.name))
+    // private val loggerField = context.referenceClass(FqName(Logger::class.java.name))
 
     override fun interestedIn(key: FirPluginKey): Boolean {
         return key == LoggerFieldGenerator.Key
@@ -56,7 +57,9 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
 
     private fun transformFunctionBody(function: IrSimpleFunction): IrBody {
         return irFactory.createBlockBody(defaultBodyOffSet, defaultBodyOffSet) {
-            val loggerCallSymbol = loggerField!!.owner.getSimpleFunction(CustomLogger.Logger::logState.name)!!
+            val loggerField = context.referenceClass(FqName(Logger::class.java.name))
+
+            val loggerCallSymbol = loggerField!!.owner.getSimpleFunction(Logger::logState.name)!!
 
             val declarationBuilder = DeclarationIrBuilder(context, function.symbol, startOffset, endOffset)
             statements.add(declarationBuilder.createLoggingStatement(

@@ -18,7 +18,7 @@ import ru.itmo.kotlin.plugin.toFQN
 
 class LoggerFieldGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     companion object {
-        private val LOGGER_NAME = Name.identifier("logger")
+        val LOGGER_NAME = Name.identifier("logger")
 
         private val PREDICATE: DeclarationPredicate = has("StateLogging".toFQN())
     }
