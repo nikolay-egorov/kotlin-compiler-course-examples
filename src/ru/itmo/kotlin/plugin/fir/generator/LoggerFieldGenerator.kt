@@ -1,0 +1,44 @@
+package ru.itmo.kotlin.plugin.fir.generator
+
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
+import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
+import org.jetbrains.kotlin.fir.extensions.predicate.has
+import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.name.CallableId
+
+
+import org.jetbrains.kotlin.name.Name
+import ru.itmo.kotlin.plugin.toFQN
+
+class LoggerFieldGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
+    companion object {
+        private val LOGGER_NAME = Name.identifier("logger")
+
+        private val PREDICATE: DeclarationPredicate = has("StateLogging".toFQN())
+    }
+
+    private val predicateBasedProvider = session.predicateBasedProvider
+    private val matchedClasses by lazy {
+        predicateBasedProvider.getSymbolsByPredicate(PREDICATE).filterIsInstance<FirRegularClassSymbol>()
+    }
+
+
+    object Key : FirPluginKey() {
+        override fun toString(): String = "LoggerFieldGeneratorKey"
+    }
+
+
+    override fun generateProperties(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirPropertySymbol> {
+        if (callableId.callableName != LOGGER_NAME) return emptyList()
+        val classId = callableId.classId ?: return emptyList()
+        val matchedClassSymbol = matchedClasses.firstOrNull { it.classId == classId } ?: return emptyList()
+        // if (matchedClassSymbol.superConeTypes.any { it.customAnnotations.contains() })
+
+        return listOf(buildLoggerProperty(matchedClassSymbol, callableId, Key).symbol)
+    }
+}
