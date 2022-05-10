@@ -1,4 +1,4 @@
-package ru.itmo.kotlin.plugin.ir
+package ru.itmo.kotlin.plugin.ir.simple
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.fir.declarations.FirPluginKey
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import ru.itmo.kotlin.plugin.fir.SimpleClassGenerator
+import ru.itmo.kotlin.plugin.ir.AbstractTransformerForGenerator
 
 class SimpleIrBodyGenerator(pluginContext: IrPluginContext) : AbstractTransformerForGenerator(pluginContext) {
     override fun interestedIn(key: FirPluginKey): Boolean {

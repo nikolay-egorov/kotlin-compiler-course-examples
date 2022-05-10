@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.test.services.TestServices
 import ru.itmo.kotlin.plugin.LoggingPluginFirExtensionRegistrar
 import ru.itmo.kotlin.plugin.LoggingPluginIrExtensionRegistrar
 import ru.itmo.kotlin.plugin.SimplePluginRegistrar
-import ru.itmo.kotlin.plugin.ir.SimpleIrGenerationExtension
+import ru.itmo.kotlin.plugin.ir.simple.SimpleIrGenerationExtension
 
 class ExtensionRegistrarConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun registerCompilerExtensions(project: Project, module: TestModule, configuration: CompilerConfiguration) {

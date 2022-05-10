@@ -23,9 +23,9 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.statements
 import org.jetbrains.kotlin.name.FqName
 import ru.itmo.kotlin.plugin.addAsString
+import ru.itmo.kotlin.plugin.asAnnotationFQN
 import ru.itmo.kotlin.plugin.defaultBodyOffSet
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
-import ru.itmo.kotlin.plugin.asAnnotationFQN
 import ru.itmo.kotlin.plugin.logger.CustomLogger
 import ru.itmo.kotlin.plugin.logger.Logger
 
@@ -35,7 +35,7 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
     }
 
     override fun interestedIn(key: FirPluginKey): Boolean {
-        return key == LoggerFieldGenerator.Key
+        return key != LoggerFieldGenerator.Key
     }
 
     override fun generateBodyForFunction(function: IrSimpleFunction, key: FirPluginKey): IrBody? {

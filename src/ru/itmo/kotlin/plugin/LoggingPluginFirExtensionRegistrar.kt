@@ -7,10 +7,9 @@ import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
+import ru.itmo.kotlin.plugin.ir.LoggerIrFieldFillerTransformer
 import ru.itmo.kotlin.plugin.ir.LoggerIrFunctionTransformer
-import ru.itmo.kotlin.plugin.ir.transformers.LoggerIrFieldFillerTransformer
 
 class LoggingPluginFirExtensionRegistrar : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
@@ -23,7 +22,7 @@ class LoggingPluginFirExtensionRegistrar : FirExtensionRegistrar() {
 class LoggingPluginIrExtensionRegistrar : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         val transformers = listOf(
-            // LoggerIrFieldFillerTransformer(pluginContext),
+            LoggerIrFieldFillerTransformer(pluginContext),
             LoggerIrFunctionTransformer(pluginContext),
         )
 
