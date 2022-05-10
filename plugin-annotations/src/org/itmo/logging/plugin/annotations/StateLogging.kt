@@ -1,4 +1,4 @@
-package org.itmo.logging.plugin
+package org.itmo.logging.plugin.annotations
 
 annotation class StateLogging
 
