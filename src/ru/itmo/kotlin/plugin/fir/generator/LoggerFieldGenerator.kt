@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.name.CallableId
 
 
 import org.jetbrains.kotlin.name.Name
-import ru.itmo.kotlin.plugin.toFQN
+import ru.itmo.kotlin.plugin.asAnnotationFQN
 
 class LoggerFieldGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     companion object {
         val LOGGER_NAME = Name.identifier("logger")
 
-        private val PREDICATE: DeclarationPredicate = has("StateLogging".toFQN())
+        private val PREDICATE: DeclarationPredicate = has("StateLogging".asAnnotationFQN())
     }
 
     private val predicateBasedProvider = session.predicateBasedProvider
@@ -45,7 +45,7 @@ class LoggerFieldGenerator(session: FirSession) : FirDeclarationGenerationExtens
 
     override fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>): Set<Name> {
         return when (classSymbol) {
-            in matchedClasses -> setOf(LOGGER_NAME)
+            in matchedClasses -> setOf(LOGGER_NAME, classSymbol.name)
             else -> emptySet()
         }
     }

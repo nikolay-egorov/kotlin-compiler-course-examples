@@ -13,17 +13,21 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirPluginKey
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.builder.buildPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.expressions.FirEmptyArgumentList
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCallOrigin
 import org.jetbrains.kotlin.fir.expressions.buildBinaryArgumentList
+import org.jetbrains.kotlin.fir.expressions.buildResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.buildUnaryArgumentList
 import org.jetbrains.kotlin.fir.expressions.builder.buildClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildComponentCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildFunctionCall
+import org.jetbrains.kotlin.fir.expressions.builder.buildGetClassCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildReturnExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirLazyExpression
@@ -36,7 +40,10 @@ import org.jetbrains.kotlin.fir.references.builder.buildImplicitThisReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedCallableReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
+import org.jetbrains.kotlin.fir.resolve.calls.CallableReferenceMappedArguments
 import org.jetbrains.kotlin.fir.resolve.defaultType
+import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.getClassDeclaredConstructors
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
@@ -49,9 +56,11 @@ import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import ru.itmo.kotlin.plugin.logger.CustomLogger
-import ru.itmo.kotlin.plugin.logger.Logger
+import ru.itmo.kotlin.plugin.DependencyLocations
+import kotlin.jvm.internal.CallableReference
+
 
 @OptIn(SymbolInternals::class, FirImplementationDetail::class)
 fun FirDeclarationGenerationExtension.buildLoggerProperty(
@@ -60,7 +69,7 @@ fun FirDeclarationGenerationExtension.buildLoggerProperty(
     key: FirPluginKey
 ): FirProperty {
     return buildProperty {
-        resolvePhase = FirResolvePhase.TYPES
+        resolvePhase = FirResolvePhase.BODY_RESOLVE
         moduleData = session.moduleData
         origin = key.origin
         status = FirResolvedDeclarationStatusImpl(
@@ -68,9 +77,10 @@ fun FirDeclarationGenerationExtension.buildLoggerProperty(
             Modality.FINAL,
             EffectiveVisibility.Public
         )
+        val loggerClassId = ClassId.fromString(DependencyLocations.loggerClassId)
         val resolvedReturnTypeRef = buildResolvedTypeRef {
             type = ConeClassLikeTypeImpl(
-                ConeClassLikeLookupTagImpl(Logger::class.java.classId),
+                ConeClassLikeLookupTagImpl(loggerClassId),
                 emptyArray(),
                 isNullable = false
             )
@@ -100,6 +110,14 @@ fun FirDeclarationGenerationExtension.buildLoggerProperty(
 
         getter = builtGetter
 
-        // delegate = FirLazyExpression(builtGetter.source)
+        initializer = buildFunctionCall {
+            typeRef = resolvedReturnTypeRef
+            calleeReference = buildResolvedNamedReference {
+                val classContractor = session.symbolProvider.getClassDeclaredConstructors(loggerClassId).first { it.isPrimary }
+                name = classContractor.name
+                resolvedSymbol = classContractor
+            }
+            argumentList = buildResolvedArgumentList(LinkedHashMap())
+        }
     }
 }

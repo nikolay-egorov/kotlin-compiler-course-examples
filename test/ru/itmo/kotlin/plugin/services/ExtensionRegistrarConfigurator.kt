@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.EnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.TestServices
 import ru.itmo.kotlin.plugin.LoggingPluginFirExtensionRegistrar
+import ru.itmo.kotlin.plugin.LoggingPluginIrExtensionRegistrar
 import ru.itmo.kotlin.plugin.SimplePluginRegistrar
 import ru.itmo.kotlin.plugin.ir.SimpleIrGenerationExtension
 
@@ -17,6 +18,6 @@ class ExtensionRegistrarConfigurator(testServices: TestServices) : EnvironmentCo
         IrGenerationExtension.registerExtension(project, SimpleIrGenerationExtension())
 
         FirExtensionRegistrar.registerExtension(project, LoggingPluginFirExtensionRegistrar())
-        // IrGenerationExtension.registerExtension(project, SimpleIrGenerationExtension())
+        IrGenerationExtension.registerExtension(project, LoggingPluginIrExtensionRegistrar())
     }
 }

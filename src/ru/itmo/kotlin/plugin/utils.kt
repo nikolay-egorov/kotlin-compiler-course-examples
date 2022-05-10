@@ -6,8 +6,9 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
 import org.jetbrains.kotlin.ir.expressions.addArgument
 import org.jetbrains.kotlin.name.FqName
+import ru.itmo.kotlin.plugin.DependencyLocations.annotationsPath
 
-fun String.toFQN(): FqName = FqName("org.itmo.logging.plugin.$this")
+fun String.asAnnotationFQN(): FqName = FqName("${annotationsPath}.$this")
 
 const val defaultBodyOffSet = -1
 
@@ -15,3 +16,9 @@ const val defaultBodyOffSet = -1
 fun IrStringConcatenation.addAsString(builder: IrBuilderWithScope, data: String)
     = addArgument(builder.irString(data))
 
+object DependencyLocations {
+    const val loggerClassId = "org/itmo/logging/plugin/Logger"
+    const val dependencyPath: String = "org.itmo.logging.plugin"
+    const val loggerFqName: String = "${dependencyPath}.Logger"
+    const val annotationsPath: String = "${dependencyPath}.annotations"
+}

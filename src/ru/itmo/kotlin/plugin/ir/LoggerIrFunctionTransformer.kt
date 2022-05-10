@@ -3,7 +3,6 @@ package ru.itmo.kotlin.plugin.ir
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.fir.declarations.FirPluginKey
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.buildStatement
 import org.jetbrains.kotlin.ir.builders.irCall
@@ -26,7 +25,7 @@ import org.jetbrains.kotlin.name.FqName
 import ru.itmo.kotlin.plugin.addAsString
 import ru.itmo.kotlin.plugin.defaultBodyOffSet
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
-import ru.itmo.kotlin.plugin.toFQN
+import ru.itmo.kotlin.plugin.asAnnotationFQN
 import ru.itmo.kotlin.plugin.logger.CustomLogger
 import ru.itmo.kotlin.plugin.logger.Logger
 
@@ -34,8 +33,6 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
     companion object {
         private const val methodLogAnnotation: String = "ToLogFunction"
     }
-
-    // private val loggerField = context.referenceClass(FqName(Logger::class.java.name))
 
     override fun interestedIn(key: FirPluginKey): Boolean {
         return key == LoggerFieldGenerator.Key
@@ -53,7 +50,7 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
     }
 
     private fun isAnnotatedWithLogger(function: IrSimpleFunction): Boolean
-        = function.hasAnnotation(methodLogAnnotation.toFQN())
+        = function.hasAnnotation(methodLogAnnotation.asAnnotationFQN())
 
     private fun transformFunctionBody(function: IrSimpleFunction): IrBody {
         return irFactory.createBlockBody(defaultBodyOffSet, defaultBodyOffSet) {

@@ -23,7 +23,7 @@ class LoggingPluginFirExtensionRegistrar : FirExtensionRegistrar() {
 class LoggingPluginIrExtensionRegistrar : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         val transformers = listOf(
-            LoggerIrFieldFillerTransformer(pluginContext),
+            // LoggerIrFieldFillerTransformer(pluginContext),
             LoggerIrFunctionTransformer(pluginContext),
         )
 
