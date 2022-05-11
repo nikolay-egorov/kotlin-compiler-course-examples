@@ -2,7 +2,7 @@ package ru.itmo.kotlin.plugin.ir
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
-import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.fir.backend.IrPluginDeclarationOrigin
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.buildStatement
 import org.jetbrains.kotlin.ir.builders.irCall
@@ -11,60 +11,63 @@ import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irString
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.fields
 import org.jetbrains.kotlin.ir.util.getSimpleFunction
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.util.statements
-import org.jetbrains.kotlin.name.FqName
+import ru.itmo.kotlin.plugin.DependencyLocations.loggingMethodName
 import ru.itmo.kotlin.plugin.addAsString
 import ru.itmo.kotlin.plugin.asAnnotationFQN
 import ru.itmo.kotlin.plugin.defaultBodyOffSet
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
 import ru.itmo.kotlin.plugin.logger.CustomLogger
-import ru.itmo.kotlin.plugin.logger.Logger
 
-class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTransformerForGenerator(pluginContext) {
+
+class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctionsIrTransformer(context) {
     companion object {
         private const val methodLogAnnotation: String = "ToLogFunction"
+        private const val classLogAnnotation: String = "StateLogging"
     }
 
-    override fun interestedIn(key: FirPluginKey): Boolean {
-        return key != LoggerFieldGenerator.Key
-    }
+    override fun interestedInClass(irClass: IrClass): Boolean
+        = irClass.hasAnnotation(classLogAnnotation.asAnnotationFQN())
 
-    override fun generateBodyForFunction(function: IrSimpleFunction, key: FirPluginKey): IrBody? {
-        val body = function.body
-        return if (isAnnotatedWithLogger(function)) {
-            transformFunctionBody(function)
-        } else body
-    }
+    override fun interestedInFunction(function: IrSimpleFunction): Boolean
+        = isAnnotatedWithLogger(function)
 
-    override fun generateBodyForConstructor(constructor: IrConstructor, key: FirPluginKey): IrBody? {
-        return generateBodyForDefaultConstructor(constructor)
+    override fun generateBodyForFunction(function: IrSimpleFunction): IrBody? {
+        return transformFunctionBody(function)
     }
 
     private fun isAnnotatedWithLogger(function: IrSimpleFunction): Boolean
         = function.hasAnnotation(methodLogAnnotation.asAnnotationFQN())
 
+
     private fun transformFunctionBody(function: IrSimpleFunction): IrBody {
         return irFactory.createBlockBody(defaultBodyOffSet, defaultBodyOffSet) {
-            val loggerField = context.referenceClass(FqName(Logger::class.java.name))
+            val loggerField = function.parentClassOrNull
+                                ?.properties
+                                ?.firstOrNull { (it.origin as? IrPluginDeclarationOrigin)?.pluginKey == LoggerFieldGenerator.Key }
+                ?: return@createBlockBody
 
-            val loggerCallSymbol = loggerField!!.owner.getSimpleFunction(Logger::logState.name)!!
+            val declaredClassType = loggerField.backingField?.type?.classOrNull ?: return@createBlockBody
+            val loggerCallSymbol = declaredClassType.getSimpleFunction(loggingMethodName)!!
 
             val declarationBuilder = DeclarationIrBuilder(context, function.symbol, startOffset, endOffset)
             statements.add(declarationBuilder.createLoggingStatement(
-                function, loggerField.owner.symbol, loggerCallSymbol
+                function, declaredClassType, loggerCallSymbol
             ))
             statements.addAll(function.body?.statements ?: emptyList())
             statements.add(declarationBuilder.createLoggingStatement(
-                function, loggerField.owner.symbol, loggerCallSymbol, whenHappened = CustomLogger.HappenedWhen.AFTER
+                function, declaredClassType, loggerCallSymbol, whenHappened = CustomLogger.HappenedWhen.AFTER
             ))
         }
 
@@ -81,8 +84,8 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
             // addString(stringBuilder, "in ${irFunction.name}")
             with(stringBuilder) {
                 addAsString(builderScope, if (whenHappened == CustomLogger.HappenedWhen.BEFORE)
-                                            "in ${irFunction.name}"
-                                            else "")
+                    "in ${irFunction.name}"
+                else "")
                 addAsString(builderScope, "Class state ${whenHappened.time}:\n${getClassState(irFunction)}")
                 addAsString(builderScope, "Arguments ${whenHappened.time}:\n${getFunctionArgs(irFunction)}")
             }
@@ -94,6 +97,8 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
             return@with this
         }
     }
+
+
 
     private fun IrBuilderWithScope.getFunctionArgs(irFunction: IrSimpleFunction): String {
         return buildString {
@@ -114,7 +119,6 @@ class LoggerIrFunctionTransformer(pluginContext: IrPluginContext) : AbstractTran
         }
         return sb.toString()
     }
-
 
 
 }

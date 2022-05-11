@@ -2,7 +2,6 @@ package ru.itmo.kotlin.plugin
 
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.irString
-import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
 import org.jetbrains.kotlin.ir.expressions.addArgument
 import org.jetbrains.kotlin.name.FqName
@@ -21,4 +20,6 @@ object DependencyLocations {
     const val dependencyPath: String = "org.itmo.logging.plugin"
     const val loggerFqName: String = "${dependencyPath}.Logger"
     const val annotationsPath: String = "${dependencyPath}.annotations"
+
+    const val loggingMethodName: String = "logState"
 }
