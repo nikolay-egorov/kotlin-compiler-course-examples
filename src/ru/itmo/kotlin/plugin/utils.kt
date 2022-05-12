@@ -22,4 +22,5 @@ object DependencyLocations {
     const val annotationsPath: String = "${dependencyPath}.annotations"
 
     const val loggingMethodName: String = "logState"
+    const val loggingReturnMethodAndAnnotationParameterName: String = "logReturn"
 }

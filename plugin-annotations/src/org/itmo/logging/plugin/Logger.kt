@@ -2,6 +2,11 @@ package org.itmo.logging.plugin
 
 
 class Logger {
+    fun logReturn(data: String, value: Any?): Any? {
+        println(data + value)
+        return value
+    }
+
     fun logState(data: String, level: CustomLogger.InfoLevel) {
         doLog(Pair(data, level))
     }
