@@ -34,6 +34,8 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.util.statements
 import org.jetbrains.kotlin.name.Name
+import ru.itmo.kotlin.plugin.AnnotationsNaming.classLogAnnotation
+import ru.itmo.kotlin.plugin.AnnotationsNaming.methodLogAnnotation
 import ru.itmo.kotlin.plugin.DependencyLocations.loggingMethodName
 import ru.itmo.kotlin.plugin.DependencyLocations.loggingReturnMethodAndAnnotationParameterName
 import ru.itmo.kotlin.plugin.addAsString
@@ -44,10 +46,6 @@ import ru.itmo.kotlin.plugin.logger.CustomLogger
 
 
 class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctionsIrTransformer(context) {
-    companion object {
-        private const val methodLogAnnotation: String = "ToLogFunction"
-        private const val classLogAnnotation: String = "StateLogging"
-    }
     private var foundClassWithAnnotation: IrClass? = null
 
     override fun interestedInClass(irClass: IrClass): Boolean {

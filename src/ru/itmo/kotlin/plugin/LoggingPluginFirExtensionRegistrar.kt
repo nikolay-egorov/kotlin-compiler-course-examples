@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import ru.itmo.kotlin.plugin.fir.diagnostics.StateLoggingCheckerExtensions
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
 import ru.itmo.kotlin.plugin.ir.LoggerIrFieldFillerTransformer
 import ru.itmo.kotlin.plugin.ir.LoggerIrFunctionsTransformer
@@ -14,7 +15,7 @@ import ru.itmo.kotlin.plugin.ir.LoggerIrFunctionsTransformer
 class LoggingPluginFirExtensionRegistrar : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
         +::LoggerFieldGenerator
-        // todo: add
+        +::StateLoggingCheckerExtensions
         // +::AdditionalSupertypeGenerator
     }
 }

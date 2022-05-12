@@ -24,3 +24,11 @@ object DependencyLocations {
     const val loggingMethodName: String = "logState"
     const val loggingReturnMethodAndAnnotationParameterName: String = "logReturn"
 }
+
+object AnnotationsNaming {
+    const val methodLogAnnotationClassId: String = "org/itmo/logging/plugin/annotations/ToLogFunction"
+    const val classLogAnnotationClassId: String = "org/itmo/logging/plugin/annotations/StateLogging"
+    const val methodLogAnnotation: String = "ToLogFunction"
+    const val classLogAnnotation: String = "StateLogging"
+    val annotationsNames = setOf(classLogAnnotation, methodLogAnnotation)
+}
