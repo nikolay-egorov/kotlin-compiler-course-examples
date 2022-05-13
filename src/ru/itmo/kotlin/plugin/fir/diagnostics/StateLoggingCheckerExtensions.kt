@@ -23,7 +23,7 @@ class StateLoggingCheckerExtensions(session: FirSession) : FirAdditionalCheckers
             get() = setOf(LoggerPropertyChecker)
 
         override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>
-            get() = setOf(LoggerFunctionChecker)
+            get() = setOf(LoggerFunctionChecker, LoggerFunctionSemanticsChecker)
 
 
     }

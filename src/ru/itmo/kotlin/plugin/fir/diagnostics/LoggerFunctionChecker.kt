@@ -8,8 +8,10 @@ import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirFunctionChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.name.ClassId
@@ -45,8 +47,11 @@ object LoggerFunctionChecker: FirFunctionChecker() {
     private fun FirFunction.isWrongAnnotation(): Boolean
         = hasAnnotation(ClassId.fromString(loggerClassId))
 
-    private fun FirFunction.isAnnotated(): Boolean
+    fun FirFunction.isAnnotated(): Boolean
         = hasAnnotation(ClassId.fromString(methodLogAnnotationClassId))
+
+    fun FirFunction.getFunctionLogAnnotation(): FirAnnotation
+        = getAnnotationByClassId(ClassId.fromString(methodLogAnnotationClassId))!!
 
     private fun FirFunction.isGetter(loggerClass: FirClassLikeSymbol<*>): Boolean
         = this.returnTypeRef == loggerClass && getRawName() == "<get-logger>"
