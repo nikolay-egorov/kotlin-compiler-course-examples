@@ -3,9 +3,9 @@
 package ru.itmo.kotlin.plugin.runners;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -38,6 +38,12 @@ public class BoxTestGenerated extends AbstractBoxTest {
         @Test
         public void testAllFilesPresentInLogging() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("testData/logging"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("log_hierarchy.kt")
+        public void testLog_hierarchy() throws Exception {
+            runTest("testData/logging/log_hierarchy.kt");
         }
 
         @Test

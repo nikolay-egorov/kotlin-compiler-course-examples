@@ -3,9 +3,8 @@
 package ru.itmo.kotlin.plugin.runners;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -19,6 +18,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     @Test
     public void testAllFilesPresentInDiagnostics() throws Exception {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("testData/diagnostics"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("logging.kt")
+    public void testLogging() throws Exception {
+        runTest("testData/diagnostics/logging.kt");
     }
 
     @Test

@@ -1,9 +1,9 @@
 package foo.bar
 
-import org.itmo.my.pretty.plugin.SomeAnnotation
+import org.itmo.logging.plugin.annotations.SomeAnnotation
 
 @SomeAnnotation
 fun test() {
-    // val s = MyClass().foo()
-    // s.<!UNRESOLVED_REFERENCE!>inc<!>() // should be an error
+    val s = <!UNRESOLVED_REFERENCE!>MyClass<!>().foo()
+    s.<!OVERLOAD_RESOLUTION_AMBIGUITY!>inc<!>() // should be an error
 }
