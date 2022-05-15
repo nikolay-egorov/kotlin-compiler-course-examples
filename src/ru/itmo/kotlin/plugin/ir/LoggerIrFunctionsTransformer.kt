@@ -22,11 +22,12 @@ import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
+import org.jetbrains.kotlin.ir.expressions.addArgument
 import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.util.fields
 import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 import org.jetbrains.kotlin.ir.util.getSimpleFunction
 import org.jetbrains.kotlin.ir.util.hasAnnotation
@@ -134,11 +135,13 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
         with(irCall(onLogSymbol)) {
             val builderScope = this@buildStatement
             with(irConcat()) {
-                addAsString(builderScope, if (whenHappened == CustomLogger.HappenedWhen.BEFORE)
-                    "--> ${irFunction.name}"
+                addAsString(builderScope, if (whenHappened == CustomLogger.HappenedWhen.BEFORE) "--> ${irFunction.name}"
                 else "${whenHappened.time} ${irFunction.name}")
-                addAsString(builderScope, "Class state:${getClassState(irFunction).toProperStateFormatting()}")
-                addAsString(builderScope, "Arguments:${getFunctionArgs(irFunction).toProperStateFormatting()}")
+                addAsString(builderScope, "\n")
+                addAsString(builderScope, "\tClass state:")
+                getClassState(builderScope, irFunction)
+                addAsString(builderScope, "\tArguments:")
+                getFunctionArgs(builderScope, irFunction)
 
 
                 putValueArgument(0, this)
@@ -160,25 +163,43 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
     private fun String.toProperStateFormatting(): String
         = ifEmpty { "\t[empty]" }
 
-    private fun IrBuilderWithScope.getFunctionArgs(irFunction: IrSimpleFunction): String {
-        return buildString {
-            irFunction.valueParameters.forEach {
-                append("\t\t${it.name} = ${irGet(it)}\n")
-            }
-            append("\t")
-            append("-".repeat(30))
+    private fun IrStringConcatenation.getFunctionArgs(builder: IrBuilderWithScope, irFunction: IrSimpleFunction) {
+        if (irFunction.valueParameters.isEmpty()) {
+            onEmptyState(builder)
+            return
         }
+
+        irFunction.valueParameters.forEach {
+            addAsString(builder, "\t\t${it.name} = ")
+            addArgument(builder.irGet(it))
+            addAsString(builder, "\n")
+        }
+        addAsString(builder, "\n")
+        addAsString(builder, "-".repeat(30))
     }
 
 
-    private fun IrBuilderWithScope.getClassState(irFunction: IrSimpleFunction): String {
-        val classSymbol = irFunction.parentClassOrNull ?: return ""
-        if (!classSymbol.fields.iterator().hasNext()) return ""
-        val sb = StringBuilder()
-        classSymbol.fields.forEach {
-            sb.append("\t\t${it.name} = ${irGetField(classSymbol.thisReceiver?.let { it1 -> irGet(it1) }, it)}\n")
+    private fun IrStringConcatenation.getClassState(builder: IrBuilderWithScope, irFunction: IrSimpleFunction) {
+        val classSymbol = irFunction.parentClassOrNull
+        if (classSymbol == null) {
+            onEmptyState(builder, true)
+            return
         }
-        return sb.toString()
+        val properties = classSymbol.properties
+        if (!properties.iterator().hasNext()) {
+            onEmptyState(builder)
+            return
+        }
+        val instanceReceiver = if (irFunction.dispatchReceiverParameter == null) null else builder.irGet(irFunction.dispatchReceiverParameter!!)
+        properties.filter { !it.isFakeOverride }.forEach {
+            addAsString(builder, "\t\t${it.name} = ")
+            addArgument(builder.irGetField(instanceReceiver, it.backingField!!))
+            addAsString(builder, "\n")
+        }
+    }
+
+    private fun IrStringConcatenation.onEmptyState(builder: IrBuilderWithScope, noState: Boolean = false) {
+        addArgument(builder.irString(if (noState) "\t[static]" else "\t[empty]"))
     }
 
 }

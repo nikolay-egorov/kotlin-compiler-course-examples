@@ -7,12 +7,12 @@ class Logger {
         return value
     }
 
-    fun logState(data: String, level: CustomLogger.InfoLevel) {
+    fun logState(data: String, level: String) {
         doLog(Pair(data, level))
     }
 
     private fun doLog(info: OutputInfo) {
-        println("[StateLogging] --\t${info.second}\t -- \t\t${info.first}")
+        println("[StateLogging] --\t${info.second}\t -- \t${info.first}")
     }
 }
 
