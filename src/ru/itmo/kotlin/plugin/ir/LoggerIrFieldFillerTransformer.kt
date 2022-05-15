@@ -1,11 +1,14 @@
 package ru.itmo.kotlin.plugin.ir
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.fir.backend.IrPluginDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBody
+import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
@@ -34,10 +37,14 @@ class LoggerIrFieldFillerTransformer(pluginContext: IrPluginContext) : AbstractT
             val parentClass = function.parentClassOrNull ?: return@createBlockBody
             val generatedProperty = parentClass.properties.firstOrNull { (it.origin as? IrPluginDeclarationOrigin)?.pluginKey == LoggerFieldGenerator.Key }!!
             val r = function.returnType
+            val declarationBuilder = DeclarationIrBuilder(context, function.symbol, startOffset, endOffset)
+            val properReceiver = if (function.dispatchReceiverParameter == null) null
+                                else declarationBuilder.irGet(function.dispatchReceiverParameter!!, type = function.dispatchReceiverParameter!!.type)
 
             statements.add(
-                IrReturnImpl(startOffset, endOffset, r, function.symbol, IrGetFieldImpl(
-                    startOffset, endOffset, generatedProperty.backingField!!.symbol,  r)
+                IrReturnImpl(startOffset, endOffset, r, function.symbol,
+                    IrGetFieldImpl(startOffset, endOffset, generatedProperty.backingField!!.symbol, generatedProperty.backingField!!.type,
+                    receiver = properReceiver, origin = IrStatementOrigin.GET_PROPERTY)
                 )
             )
         }
