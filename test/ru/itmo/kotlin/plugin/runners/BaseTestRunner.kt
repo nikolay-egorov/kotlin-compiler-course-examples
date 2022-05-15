@@ -1,7 +1,6 @@
 package ru.itmo.kotlin.plugin.runners
 
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
-import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
 import org.jetbrains.kotlin.test.initIdeaConfiguration
 import org.jetbrains.kotlin.test.runners.AbstractKotlinCompilerTest
@@ -10,6 +9,7 @@ import org.jetbrains.kotlin.test.services.EnvironmentBasedStandardLibrariesPathP
 import org.jetbrains.kotlin.test.services.KotlinStandardLibrariesPathProvider
 import org.junit.jupiter.api.BeforeAll
 import ru.itmo.kotlin.plugin.services.ExtensionRegistrarConfigurator
+import ru.itmo.kotlin.plugin.services.JarArtifactsRuntimeClasspathProvider
 import ru.itmo.kotlin.plugin.services.PluginAnnotationsProvider
 
 abstract class BaseTestRunner : AbstractKotlinCompilerTest() {
@@ -34,6 +34,9 @@ fun TestConfigurationBuilder.commonFirWithPluginFrontendConfiguration() {
         +FirDiagnosticsDirectives.FIR_DUMP
     }
 
+    useCustomRuntimeClasspathProviders(
+        ::JarArtifactsRuntimeClasspathProvider
+    )
     useConfigurators(
         ::PluginAnnotationsProvider,
         ::ExtensionRegistrarConfigurator
