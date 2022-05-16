@@ -3,7 +3,7 @@ package org.itmo.logging.plugin
 
 class Logger {
     fun logReturn(data: String, value: Any?): Any? {
-        println(data + value)
+        println("[StateLogging]: $data --> $value")
         return value
     }
 
