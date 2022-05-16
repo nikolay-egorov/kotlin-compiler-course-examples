@@ -17,7 +17,9 @@ import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
@@ -73,6 +75,7 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
     private fun transformFunctionBody(function: IrSimpleFunction): IrBody? {
         val properAnnotatedClass = foundClassWithAnnotation ?: function.parentClassOrNull ?: return function.body
         val isCallFromParent = foundClassWithAnnotation != function.parentClassOrNull
+        var shouldLogReturn = false
 
         return irFactory.createBlockBody(defaultBodyOffSet, defaultBodyOffSet) {
             val originalProperty = properAnnotatedClass.properties
@@ -95,26 +98,38 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
             annotation.getValueArgument(name = Name.identifier(loggingReturnMethodAndAnnotationParameterName))?.let {
                 val toLog = (it as? IrConst<*>)?.value as? Boolean ?: return@let
                 if (toLog) {
-                    declarationBuilder.transformReturnStatement(function, loggerClassSymbol)
+                    shouldLogReturn = true
                 }
             }
-            statements.addAll(function.body?.statements ?: emptyList())
-            statements.add(declarationBuilder.createLoggingStatement(
-                function, loggerClassSymbol, loggerField, loggerCallSymbol,
-                whenHappened = CustomLogger.HappenedWhen.AFTER,
-                originalProperty = originalProperty
-            ))
+            declarationBuilder.transformReturnStatement(function, this, loggerClassSymbol,
+                                                        loggerField, originalProperty, shouldLogReturn)
         }
     }
 
     private fun IrBuilderWithScope.transformReturnStatement(irFunction: IrSimpleFunction,
-                                                            loggerSymbol: IrClassSymbol) {
-        val properMethodSymbol = loggerSymbol.getSimpleFunction(loggingReturnMethodAndAnnotationParameterName) ?: return
+                                                            irCreatingFunctionBody: IrBlockBody,
+                                                            loggerSymbol: IrClassSymbol,
+                                                            loggerField: IrProperty,
+                                                            originalProperty: IrProperty?,
+                                                            shouldLogReturn: Boolean) {
+        val loggingMethod = loggerSymbol.getSimpleFunction(loggingMethodName) ?: return
+        val returnMethodWrapper = loggerSymbol.getSimpleFunction(loggingReturnMethodAndAnnotationParameterName) ?: return
         val builderWithScope = this
+        val functionStatements = irFunction.body?.statements?.toSet() ?: emptySet()
+        val adjustmentIndex = mutableMapOf<Int, IrCall>()
 
         irFunction.body?.transform(object : IrElementTransformerVoidWithContext() {
             override fun visitReturn(expression: IrReturn): IrExpression {
-                val wrapped = irCall(properMethodSymbol, irBuiltIns.anyNType).apply {
+                val foundAt = functionStatements.indexOf(expression)
+                adjustmentIndex[foundAt] = createLoggingStatement(
+                    irFunction, loggerSymbol, loggerField, loggingMethod,
+                    whenHappened = CustomLogger.HappenedWhen.AFTER,
+                    originalProperty = originalProperty
+                )
+
+                if (!shouldLogReturn) return super.visitReturn(expression)
+
+                val wrapped = irCall(returnMethodWrapper, irBuiltIns.anyNType).apply {
                     val data = irConcat()
                     data.addAsString(builderWithScope, "\t^${irFunction.name}")
                     putValueArgument(0, data)
@@ -124,6 +139,15 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
                 return super.visitReturn(irReturn(wrapped))
             }
         }, null)
+
+        val interestingIndexes = adjustmentIndex.keys
+        val newStatements = irCreatingFunctionBody.statements
+        functionStatements.forEachIndexed { index, irStatement ->
+            if (index in interestingIndexes) {
+                newStatements.add(adjustmentIndex[index]!!)
+            }
+            newStatements.add(irStatement)
+        }
     }
 
 
@@ -135,8 +159,8 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
         with(irCall(onLogSymbol)) {
             val builderScope = this@buildStatement
             with(irConcat()) {
-                addAsString(builderScope, if (whenHappened == CustomLogger.HappenedWhen.BEFORE) "--> ${irFunction.name}"
-                else "${whenHappened.time} ${irFunction.name}")
+                addAsString(builderScope, if (whenHappened == CustomLogger.HappenedWhen.BEFORE) "--> ${irFunction.name}()"
+                else " ${whenHappened.time} ${irFunction.name}()")
                 addAsString(builderScope, "\n")
                 addAsString(builderScope, "\tClass state:")
                 getClassState(builderScope, irFunction)
@@ -191,7 +215,7 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
             return
         }
         val instanceReceiver = if (irFunction.dispatchReceiverParameter == null) null else builder.irGet(irFunction.dispatchReceiverParameter!!)
-        properties.filter { !it.isFakeOverride }.forEach {
+        properties.filter { !it.isFakeOverride && it.backingField == null }.forEach {
             addAsString(builder, "\t\t${it.name} = ")
             addArgument(builder.irGetField(instanceReceiver, it.backingField!!))
             addAsString(builder, "\n")
