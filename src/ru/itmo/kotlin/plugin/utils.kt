@@ -23,6 +23,7 @@ object DependencyLocations {
 
     const val loggingMethodName: String = "logState"
     const val loggingReturnMethodAndAnnotationParameterName: String = "logReturn"
+    const val properLogReturnMethod: String = "fullLogReturn"
 }
 
 object AnnotationsNaming {

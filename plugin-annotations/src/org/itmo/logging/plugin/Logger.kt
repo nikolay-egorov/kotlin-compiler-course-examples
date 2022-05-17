@@ -2,8 +2,14 @@ package org.itmo.logging.plugin
 
 
 class Logger {
-    fun logReturn(data: String, value: Any?): Any? {
-        println("[StateLogging]: $data --> $value")
+    fun fullLogReturn(dataToLog: String, level:String, isShouldLogReturn: Boolean, funcName: String, value: Any?): Any? {
+        logState(dataToLog, level)
+        if (!isShouldLogReturn) return value
+        return logReturn(funcName, value)
+    }
+
+    private fun logReturn(data: String, value: Any?): Any? {
+        println("[StateLogging]: $data --> $value\n")
         return value
     }
 
@@ -23,7 +29,7 @@ object CustomLogger {
     }
     enum class HappenedWhen(val time: String) {
         BEFORE("before call"),
-        AFTER("after call")
+        AFTER("before exit")
     }
 
 }
