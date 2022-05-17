@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.util.statements
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import ru.itmo.kotlin.plugin.AnnotationsNaming.classLogAnnotation
 import ru.itmo.kotlin.plugin.AnnotationsNaming.methodLogAnnotation
 import ru.itmo.kotlin.plugin.DependencyLocations.loggingMethodName
@@ -77,7 +78,7 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
         = isAnnotatedWithLogger(function)
 
     override fun generateBodyForFunction(function: IrSimpleFunction): IrBody? {
-        fun initForNewClass(irClass: IrClass) {
+        fun initForNewPass(irClass: IrClass) {
             DeclarationIrBuilder(context, function.symbol, function.startOffset, function.endOffset).let {
                 val thisValue = it.irGet(function.dispatchReceiverParameter!!)
                 parentReceiver = ParentReceiver(irClass, thisValue)
@@ -85,9 +86,7 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
         }
 
         function.parentClassOrNull?.let { irClass ->
-            if (parentReceiver == null || parentReceiver?.parentClass != irClass) {
-                initForNewClass(irClass)
-            }
+            initForNewPass(irClass)
         }
 
         return transformFunctionBody(function)
@@ -129,6 +128,7 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
                     shouldLogReturn = true
                 }
             }
+
             declarationBuilder.transformReturnStatement(function, this, loggerClassSymbol,
                                                         loggerField, originalProperty, shouldLogReturn)
         }
@@ -149,9 +149,9 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
                 val wrapped = irCall(returnMethodWrapper, irBuiltIns.anyNType).apply {
                     val data = irConcat()
                     data.addAsString(builderWithScope, "\t^${irFunction.name}()")
-                    val toLogGeneralData = getLoggedStateStringArgument(irFunction, whenHappened = CustomLogger.HappenedWhen.AFTER,)
+                    val toLogGeneralData = getLoggedStateStringArgument(irFunction, whenHappened = CustomLogger.HappenedWhen.AFTER, shouldLogReturn)
                     putValueArgument(0, toLogGeneralData)
-                    putValueArgument(1, irString(CustomLogger.InfoLevel.INFO.name))
+                    putValueArgument(1, irString(CustomLogger.InfoLevel.AFTER.name))
                     putValueArgument(2, irBoolean(shouldLogReturn))
                     putValueArgument(3, data)
                     putValueArgument(4, expression.value)
@@ -174,22 +174,24 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
         }
 
     private fun IrBuilderWithScope.getLoggedStateStringArgument(irFunction: IrSimpleFunction,
-                                                                whenHappened: CustomLogger.HappenedWhen = CustomLogger.HappenedWhen.BEFORE): IrStringConcatenationImpl {
+                                                                whenHappened: CustomLogger.HappenedWhen = CustomLogger.HappenedWhen.BEFORE,
+                                                                followedWithLogReturn: Boolean = false): IrStringConcatenationImpl {
         val builderScope = this
         return irConcat().apply {
             addAsString(builderScope, if (whenHappened == CustomLogger.HappenedWhen.BEFORE) "--> ${irFunction.name}()"
-            else " ${whenHappened.time} ${irFunction.name}()")
+            else "|: ${irFunction.name}()")
             addAsString(builderScope, "\n")
             addAsString(builderScope, "\tClass state:")
             getClassState(builderScope, irFunction)
             addAsString(builderScope, "\n")
             addAsString(builderScope, "\tArguments:")
-            getFunctionArgs(builderScope, irFunction)
+            getFunctionArgs(builderScope, irFunction, !followedWithLogReturn)
         }
     }
 
     private fun IrBuilderWithScope.createLoggingStatement(irFunction: IrSimpleFunction, loggerField: IrProperty,
-                                                          onLogSymbol: IrSimpleFunctionSymbol, logLevel: CustomLogger.InfoLevel = CustomLogger.InfoLevel.INFO,
+                                                          onLogSymbol: IrSimpleFunctionSymbol,
+                                                          logLevel: CustomLogger.InfoLevel = CustomLogger.InfoLevel.BEFORE,
                                                           whenHappened: CustomLogger.HappenedWhen = CustomLogger.HappenedWhen.BEFORE, originalProperty: IrProperty? = null
     ) = buildStatement(defaultBodyOffSet, defaultBodyOffSet) {
         val isDirectCall = loggerField.backingField != null
@@ -206,21 +208,25 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
     }
 
 
-    private fun IrStringConcatenation.getFunctionArgs(builder: IrBuilderWithScope, irFunction: IrSimpleFunction) {
+    private fun IrStringConcatenation.getFunctionArgs(builder: IrBuilderWithScope, irFunction: IrSimpleFunction,
+                                                      printBorder: Boolean = true) {
         if (irFunction.valueParameters.isEmpty()) {
             onEmptyState(builder)
             return
         }
         val totalSz = irFunction.valueParameters.size
         irFunction.valueParameters.forEachIndexed { index, it ->
-            addAsString(builder, "\t${it.name} :${it.type.classFqName} = ")
+            addAsString(builder, "\t${it.name}: ${it.type.classFqName} = ")
             addArgument(builder.irGet(it))
             if (index < totalSz - 1) {
                 addAsString(builder, ", ")
             }
         }
-        addAsString(builder, "\n")
-        addAsString(builder, "-".repeat(30))
+        if (printBorder) {
+            addAsString(builder, "\n")
+            addAsString(builder, "-".repeat(30))
+            addAsString(builder, "\n")
+        }
     }
 
     private fun IrBuilderWithScope.getProperLoggerGetterCall(isDirectCall: Boolean, loggerField: IrProperty, originalField: IrField?, receiver: IrExpression): IrDeclarationReference {
@@ -244,15 +250,19 @@ class LoggerIrFunctionsTransformer(context: IrPluginContext): AnnotatedFunctions
             onEmptyState(builder)
             return
         }
-        val instanceReceiver = if (irFunction.dispatchReceiverParameter == null) null else builder.irGet(irFunction.dispatchReceiverParameter!!)
+
         val filteredProperties = properties.filter { !it.isFakeOverride && !it.origin.isSynthetic && it.origin !is IrPluginDeclarationOrigin }
         if (!filteredProperties.iterator().hasNext()) {
             onEmptyState(builder)
             return
         }
         filteredProperties.forEach {
-            addAsString(builder, "\t${it.name} :${it.getter!!.returnType.classFqName} = ")
-            addArgument(builder.irGetField(instanceReceiver, it.backingField!!))
+            addAsString(builder, "\t${it.name}: ${it.getter!!.returnType.classFqName} = ")
+            val instanceReceiver = runIf(irFunction.dispatchReceiverParameter != null) {
+                builder.irGet(perFunctionCapturedReceiver!!)
+            }
+
+            addArgument(builder.irCall(it.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply { dispatchReceiver = instanceReceiver })
             addAsString(builder, ", ")
         }
     }

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
 class StateLoggingCheckerExtensions(session: FirSession) : FirAdditionalCheckersExtension(session) {
     override val expressionCheckers: ExpressionCheckers = object : ExpressionCheckers() {
         override val annotationCallCheckers: Set<FirAnnotationCallChecker>
-            get() = setOf(LoggerAnnotationsChecker)
+            get() = emptySet()
     }
 
     override val declarationCheckers: DeclarationCheckers = object : DeclarationCheckers() {

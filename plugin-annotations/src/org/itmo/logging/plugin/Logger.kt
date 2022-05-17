@@ -9,7 +9,9 @@ class Logger {
     }
 
     private fun logReturn(data: String, value: Any?): Any? {
-        println("[StateLogging]: $data --> $value\n")
+        println("[StateLogging]: $data --> $value")
+        println("-".repeat(30))
+        println("")
         return value
     }
 
@@ -20,16 +22,4 @@ class Logger {
     private fun doLog(info: OutputInfo) {
         println("[StateLogging] --\t${info.second}\t --${info.first}")
     }
-}
-
-
-object CustomLogger {
-    enum class InfoLevel {
-        WARN, INFO, ERROR
-    }
-    enum class HappenedWhen(val time: String) {
-        BEFORE("before call"),
-        AFTER("before exit")
-    }
-
 }
