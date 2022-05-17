@@ -41,15 +41,21 @@ public class BoxTestGenerated extends AbstractBoxTest {
         }
 
         @Test
-        @TestMetadata("log_hierarchy.kt")
-        public void testLog_hierarchy() throws Exception {
-            runTest("testData/logging/log_hierarchy.kt");
+        @TestMetadata("logHierarchy.kt")
+        public void testLogHierarchy() throws Exception {
+            runTest("testData/logging/logHierarchy.kt");
         }
 
         @Test
         @TestMetadata("logging.kt")
         public void testLogging() throws Exception {
             runTest("testData/logging/logging.kt");
+        }
+
+        @Test
+        @TestMetadata("manyReturnsLogging.kt")
+        public void testManyReturnsLogging() throws Exception {
+            runTest("testData/logging/manyReturnsLogging.kt");
         }
     }
 }

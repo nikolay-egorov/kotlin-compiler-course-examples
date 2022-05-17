@@ -1,0 +1,32 @@
+FILE: manyReturnsLogging.kt
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() public final class A : R|kotlin/Any| {
+        public constructor(): R|A| {
+            super<R|kotlin/Any|>()
+        }
+
+        private final val myStorage: R|kotlin/collections/MutableList<kotlin/Int>| = R|kotlin/collections/mutableListOf|<R|kotlin/Int|>()
+            private get(): R|kotlin/collections/MutableList<kotlin/Int>|
+
+        @R|org/itmo/logging/plugin/annotations/ToLogFunction|(logReturn = Boolean(true)) public final fun oddAddition(x: R|kotlin/Int|): R|kotlin/String| {
+            when () {
+                ==(this@R|/A|.R|/A.myStorage|.R|SubstitutionOverride<kotlin/collections/MutableList.size: R|kotlin/Int|>|.R|kotlin/Int.plus|(R|<local>/x|).R|kotlin/Int.rem|(Int(2)), Int(0)) ->  {
+                    ^oddAddition String(EVEN!)
+                }
+                else ->  {
+                    this@R|/A|.R|/A.myStorage|.R|SubstitutionOverride<kotlin/collections/MutableList.add: R|kotlin/Boolean|>|(R|<local>/x|)
+                    ^oddAddition this@R|/A|.R|/A.myStorage|.R|SubstitutionOverride<kotlin/collections/MutableList.size: R|kotlin/Int|>|.R|kotlin/Any.toString|()
+                }
+            }
+
+        }
+
+        public final val logger: R|org/itmo/logging/plugin/Logger| = R|org/itmo/logging/plugin/Logger.Logger|()
+            public get(): R|org/itmo/logging/plugin/Logger|
+
+    }
+    public final fun box(): R|kotlin/String| {
+        lval a: R|A| = R|/A.A|()
+        R|<local>/a|.R|/A.oddAddition|(Int(12))
+        R|<local>/a|.R|/A.oddAddition|(Int(43))
+        ^box String(OK)
+    }

@@ -32,6 +32,7 @@ open class AbstractBoxTest : BaseTestRunner(), RunnerWithTargetBackendForTestGen
 
         commonFirWithPluginFrontendConfiguration()
         fir2IrStep()
+        // jvmIrBackendStep()
         irHandlersStep {
             useHandlers(
                 ::IrTextDumpHandler,
