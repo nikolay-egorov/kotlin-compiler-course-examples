@@ -8,7 +8,7 @@ FILE: logging.kt
             public get(): R|org/itmo/logging/plugin/Logger|
 
     }
-    @R|org/itmo/logging/plugin/annotations/StateLogging|() public final class B : R|A| {
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() @R|org/itmo/logging/plugin/annotations/StateLogging|() public final class B : R|A| {
         public constructor(): R|B| {
             super<R|A|>()
         }

@@ -8,7 +8,8 @@ open class A {
 }
 
 @StateLogging
-class <!DUPLICATING_ANNOTATIONS!>B<!>: A() {
+<!REPEATED_ANNOTATION!>@StateLogging<!>
+class <!ANCESTOR_WITH_ANNOTATION!>B<!>: A() {
     private val x = 47
 
     @ToLogFunction(false)

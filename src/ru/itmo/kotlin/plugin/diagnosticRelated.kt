@@ -28,15 +28,12 @@ import ru.itmo.kotlin.plugin.StateLoggingErrors.TARGET_SHOULD_NOT_BE_ENUM_CLASS
 
 object KtStateLoggingErrors {
     val TARGET_SHOULD_BE_CLASS by error0<PsiElement>(NAME_IDENTIFIER)
-    val TARGET_DELEGATE_IS_NOT_ALLOWED by error0<PsiElement>(NAME_IDENTIFIER)
     val TARGET_SHOULD_NOT_BE_ENUM_CLASS by error0<PsiElement>(NAME_IDENTIFIER)
-    val TARGET_SHOULD_BE_INSTANTIABLE = DiagnosticFactory0.create<PsiElement>(ERROR)
     val GETTER_OVERRIDE_IS_NOT_ALLOWED by error0<PsiElement>(OVERRIDE_MODIFIER)
     val NO_LOGGER_CLASS_ANNOTATION  by error0<PsiElement>(NAME_IDENTIFIER)
     val TARGET_IS_NOT_ALLOWED  by error0<PsiElement>(NAME_IDENTIFIER)
     val RETURN_HAS_NO_EFFECT by warning0<PsiElement>(NAME_IDENTIFIER)
-    val DUPLICATING_ANNOTATIONS  by warning0<PsiElement>(NAME_IDENTIFIER)
-    val ANCESTOR_WITH_ANNOTATION  by warning1<PsiElement, KtClassOrObject>(NAME_IDENTIFIER)
+    val ANCESTOR_WITH_ANNOTATION  by warning1<PsiElement, PsiElement>(NAME_IDENTIFIER)
 }
 
 

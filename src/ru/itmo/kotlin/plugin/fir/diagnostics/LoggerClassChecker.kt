@@ -1,5 +1,6 @@
 package ru.itmo.kotlin.plugin.fir.diagnostics
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
@@ -11,9 +12,12 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
+import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.fqName
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.LookupTagInternals
 import org.jetbrains.kotlin.name.ClassId
 import ru.itmo.kotlin.plugin.AnnotationsNaming.annotationsNames
 import ru.itmo.kotlin.plugin.AnnotationsNaming.classLogAnnotation
@@ -21,6 +25,7 @@ import ru.itmo.kotlin.plugin.AnnotationsNaming.classLogAnnotationClassId
 import ru.itmo.kotlin.plugin.KtStateLoggingErrors
 
 object LoggerClassChecker: FirClassChecker() {
+    @OptIn(LookupTagInternals::class)
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
         val symbol = declaration.symbol
         val session = context.session
@@ -36,7 +41,7 @@ object LoggerClassChecker: FirClassChecker() {
         }
         val isClassMarked = declaration.hasAnnotation(ClassId.fromString(classLogAnnotationClassId))
         if (parents.isNotEmpty() && isClassMarked) {
-            reporter.reportOn(source, KtStateLoggingErrors.DUPLICATING_ANNOTATIONS, context)
+            reporter.reportOn(source,KtStateLoggingErrors.ANCESTOR_WITH_ANNOTATION, parents.first().lookupTag.toFirRegularClass(session)!!.psi as PsiElement, context)
         }
         val classKind = declaration.classKind
 
