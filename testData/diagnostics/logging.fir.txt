@@ -1,0 +1,59 @@
+FILE: logging.kt
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() public open class A : R|kotlin/Any| {
+        public constructor(): R|A| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val logger: R|org/itmo/logging/plugin/Logger| = R|org/itmo/logging/plugin/Logger.Logger|()
+            public get(): R|org/itmo/logging/plugin/Logger|
+
+    }
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() @R|org/itmo/logging/plugin/annotations/StateLogging|() public final class B : R|A| {
+        public constructor(): R|B| {
+            super<R|A|>()
+        }
+
+        private final val x: R|kotlin/Int| = Int(47)
+            private get(): R|kotlin/Int|
+
+        @R|org/itmo/logging/plugin/annotations/ToLogFunction|(logReturn = Boolean(false)) public final fun foo(y: R|kotlin/Int|): R|kotlin/Int| {
+            ^foo this@R|/B|.R|/B.x|.R|kotlin/Int.plus|(R|<local>/y|)
+        }
+
+        public final val logger: R|org/itmo/logging/plugin/Logger| = R|org/itmo/logging/plugin/Logger.Logger|()
+            public get(): R|org/itmo/logging/plugin/Logger|
+
+    }
+    public final class C : R|kotlin/Any| {
+        public constructor(): R|C| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final var x: R|kotlin/Int| = Int(1)
+            public get(): R|kotlin/Int|
+            public set(value: R|kotlin/Int|): R|kotlin/Unit|
+
+        @R|org/itmo/logging/plugin/annotations/ToLogFunction|(logReturn = Boolean(true)) public final fun withEffect(): R|kotlin/Unit| {
+            this@R|/C|.R|/C.x| = Int(42)
+        }
+
+    }
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() public final enum class WrongUsage : R|kotlin/Enum<WrongUsage>| {
+        private constructor(): R|WrongUsage| {
+            super<R|kotlin/Enum<WrongUsage>|>()
+        }
+
+        public final static fun values(): R|kotlin/Array<WrongUsage>| {
+        }
+
+        public final static fun valueOf(value: R|kotlin/String|): R|WrongUsage| {
+        }
+
+        public final val logger: R|org/itmo/logging/plugin/Logger| = R|org/itmo/logging/plugin/Logger.Logger|()
+            public get(): R|org/itmo/logging/plugin/Logger|
+
+    }
+    @R|org/itmo/logging/plugin/annotations/ToLogFunction|() public final val z: R|kotlin/Int| = Int(1)
+        public get(): R|kotlin/Int|
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() public final val asClass: R|kotlin/Int| = Int(42)
+        public get(): R|kotlin/Int|

@@ -13,6 +13,7 @@ fun main() {
 
             testClass<AbstractBoxTest> {
                 model("box")
+                model("logging")
             }
         }
     }

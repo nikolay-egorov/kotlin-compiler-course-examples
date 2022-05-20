@@ -1,4 +1,4 @@
-package ru.itmo.kotlin.plugin.ir
+package ru.itmo.kotlin.plugin.ir.simple
 
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext

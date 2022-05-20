@@ -1,0 +1,40 @@
+FILE: logging.kt
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() public final class SomeClass : R|kotlin/Any| {
+        public constructor(): R|SomeClass| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val logger: R|org/itmo/logging/plugin/Logger| = R|org/itmo/logging/plugin/Logger.Logger|()
+            public get(): R|org/itmo/logging/plugin/Logger|
+
+    }
+    @R|org/itmo/logging/plugin/annotations/StateLogging|() public final class Another : R|kotlin/Any| {
+        public constructor(): R|Another| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val x: R|kotlin/Int| = Int(1)
+            public get(): R|kotlin/Int|
+
+        public final fun <T> foo(x: R|T|): R|T| {
+            ^foo R|<local>/x|
+        }
+
+        @R|org/itmo/logging/plugin/annotations/ToLogFunction|(logReturn = Boolean(true)) public final fun testFunc(x: R|kotlin/Int|, y: R|kotlin/Int|): R|kotlin/Int| {
+            ^testFunc R|<local>/x|.R|kotlin/Int.plus|(R|<local>/y|)
+        }
+
+        public final fun test(y: R|kotlin/Int|): R|kotlin/Int| {
+            ^test this@R|/Another|.R|/Another.x|.R|kotlin/Int.plus|(this@R|/Another|.R|/Another.x|).R|kotlin/Int.plus|(Int(42))
+        }
+
+        public final val logger: R|org/itmo/logging/plugin/Logger| = R|org/itmo/logging/plugin/Logger.Logger|()
+            public get(): R|org/itmo/logging/plugin/Logger|
+
+    }
+    public final fun box(): R|kotlin/String| {
+        lval a: R|Another| = R|/Another.Another|()
+        R|<local>/a|.R|/Another.testFunc|(Int(12), Int(12))
+        lval b: R|kotlin/Int| = Int(1)
+        ^box String(OK)
+    }
