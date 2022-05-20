@@ -27,9 +27,8 @@ import ru.itmo.kotlin.plugin.KtStateLoggingErrors
 object LoggerClassChecker: FirClassChecker() {
     @OptIn(LookupTagInternals::class)
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
-        val symbol = declaration.symbol
         val session = context.session
-        if (!symbol.isMarkedOrParentWith(session)) return
+        if (!declaration.symbol.isMarkedOrParentWith(session)) return
         val source = declaration.source ?: return
         if (declaration !is FirRegularClass) {
             reporter.reportOn(source, KtStateLoggingErrors.TARGET_SHOULD_BE_CLASS, context, null)
@@ -39,23 +38,20 @@ object LoggerClassChecker: FirClassChecker() {
             val localSymbol = typeRef.type.fullyExpandedType(session).toRegularClassSymbol(session) ?: return@filter false
             localSymbol.annotations.any { it.fqName(session)?.shortName()?.identifier == classLogAnnotation }
         }
-        val isClassMarked = declaration.hasAnnotation(ClassId.fromString(classLogAnnotationClassId))
+        val isClassMarked = declaration.isAnnotatedWithLogger()
         if (parents.isNotEmpty() && isClassMarked) {
             reporter.reportOn(source,KtStateLoggingErrors.ANCESTOR_WITH_ANNOTATION, parents.first().lookupTag.toFirRegularClass(session)!!.psi as PsiElement, context)
         }
-        val classKind = declaration.classKind
 
-        if (classKind == ClassKind.ENUM_CLASS) {
-            reporter.reportOn(source, KtStateLoggingErrors.TARGET_SHOULD_NOT_BE_ENUM_CLASS, context)
-            return
+        when (declaration.classKind) {
+            ClassKind.ENUM_CLASS -> reporter.reportOn(source, KtStateLoggingErrors.TARGET_SHOULD_NOT_BE_ENUM_CLASS, context)
+            ClassKind.ANNOTATION_CLASS -> reporter.reportOn(source, KtStateLoggingErrors.TARGET_SHOULD_BE_CLASS, context)
+            else -> return
         }
-
-        if (classKind == ClassKind.ANNOTATION_CLASS) {
-            reporter.reportOn(source, KtStateLoggingErrors.TARGET_SHOULD_BE_CLASS, context)
-            return
-        }
-
     }
+
+    private fun FirClass.isAnnotatedWithLogger(): Boolean
+        = hasAnnotation(ClassId.fromString(classLogAnnotationClassId))
 
     fun FirClassSymbol<*>?.isMarkedOrParentWith(session: FirSession): Boolean {
         if (this == null) return false

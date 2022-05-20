@@ -2,12 +2,12 @@ package ru.itmo.kotlin.plugin.fir.diagnostics
 
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
-import org.jetbrains.kotlin.fir.analysis.checkers.PsiSourceNavigator.getRawName
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirFunctionChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
@@ -36,9 +36,9 @@ object LoggerFunctionChecker: FirFunctionChecker() {
         if (!parentOrClassMarked && methodMarked) {
             reporter.reportOn(declaration.source, KtStateLoggingErrors.NO_LOGGER_CLASS_ANNOTATION, context)
         }
-        val loggerClass = session.symbolProvider.getClassLikeSymbolByClassId(ClassId.fromString(loggerClassId))
-        loggerClass?.let {
-            if (declaration.isGetter(it) && declaration.isOverride) {
+
+        session.symbolProvider.getClassLikeSymbolByClassId(ClassId.fromString(loggerClassId))?.let {
+            if (declaration.isLoggerGetter(it) && declaration.isOverride) {
                 reporter.reportOn(declaration.source, KtStateLoggingErrors.GETTER_OVERRIDE_IS_NOT_ALLOWED, context)
             }
         }
@@ -53,6 +53,6 @@ object LoggerFunctionChecker: FirFunctionChecker() {
     fun FirFunction.getFunctionLogAnnotation(): FirAnnotation
         = getAnnotationByClassId(ClassId.fromString(methodLogAnnotationClassId))!!
 
-    private fun FirFunction.isGetter(loggerClass: FirClassLikeSymbol<*>): Boolean
-        = this.returnTypeRef == loggerClass && getRawName() == "<get-logger>"
+    private fun FirFunction.isLoggerGetter(loggerClass: FirClassLikeSymbol<*>): Boolean
+        = this is FirPropertyAccessor && this.isGetter && this.returnTypeRef == loggerClass
 }

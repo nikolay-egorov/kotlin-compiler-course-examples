@@ -38,7 +38,6 @@ class LoggerFieldGenerator(session: FirSession) : FirDeclarationGenerationExtens
         if (callableId.callableName != LOGGER_NAME) return emptyList()
         val classId = callableId.classId ?: return emptyList()
         val matchedClassSymbol = matchedClasses.firstOrNull { it.classId == classId } ?: return emptyList()
-        // if (matchedClassSymbol.superConeTypes.any { it.customAnnotations.contains() })
 
         return listOf(buildLoggerProperty(matchedClassSymbol, callableId, Key).symbol)
     }

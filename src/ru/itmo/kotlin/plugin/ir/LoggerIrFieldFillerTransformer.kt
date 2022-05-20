@@ -13,13 +13,15 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import ru.itmo.kotlin.plugin.defaultBodyOffSet
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator
 import ru.itmo.kotlin.plugin.fir.generator.LoggerFieldGenerator.Companion.LOGGER_NAME
 
 class LoggerIrFieldFillerTransformer(pluginContext: IrPluginContext) : AbstractTransformerForGenerator(pluginContext) {
     companion object {
-        private val nameOfInterest = "<get-${LOGGER_NAME}>"
+        private val nameOfInterest = Name.special("<get-${LOGGER_NAME}>")
     }
 
     override fun interestedIn(key: FirPluginKey): Boolean {
@@ -27,7 +29,7 @@ class LoggerIrFieldFillerTransformer(pluginContext: IrPluginContext) : AbstractT
     }
 
     override fun generateBodyForFunction(function: IrSimpleFunction, key: FirPluginKey): IrBody? {
-        return if (function.name.asString() != nameOfInterest) function.body
+        return if (function.name != nameOfInterest) function.body
         else initGetterBody(function)
     }
 
@@ -38,8 +40,9 @@ class LoggerIrFieldFillerTransformer(pluginContext: IrPluginContext) : AbstractT
             val generatedProperty = parentClass.properties.firstOrNull { (it.origin as? IrPluginDeclarationOrigin)?.pluginKey == LoggerFieldGenerator.Key }!!
             val r = function.returnType
             val declarationBuilder = DeclarationIrBuilder(context, function.symbol, startOffset, endOffset)
-            val properReceiver = if (function.dispatchReceiverParameter == null) null
-                                else declarationBuilder.irGet(function.dispatchReceiverParameter!!, type = function.dispatchReceiverParameter!!.type)
+            val properReceiver = runIf(function.dispatchReceiverParameter != null) {
+                declarationBuilder.irGet(function.dispatchReceiverParameter!!, type = function.dispatchReceiverParameter!!.type)
+            }
 
             statements.add(
                 IrReturnImpl(startOffset, endOffset, r, function.symbol,

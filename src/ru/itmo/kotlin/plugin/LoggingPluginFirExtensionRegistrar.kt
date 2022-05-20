@@ -16,7 +16,6 @@ class LoggingPluginFirExtensionRegistrar : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
         +::LoggerFieldGenerator
         +::StateLoggingCheckerExtensions
-        // +::AdditionalSupertypeGenerator
     }
 }
 

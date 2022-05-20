@@ -16,7 +16,9 @@ abstract class AnnotatedFunctionsIrTransformer(protected val context: IrPluginCo
     protected val irBuiltIns = context.irBuiltIns
 
     open fun interestedInClass(irClass: IrClass): Boolean = true
+
     abstract fun interestedInFunction(function: IrSimpleFunction): Boolean
+    abstract fun generateBodyForFunction(function: IrSimpleFunction): IrBody?
 
     override fun visitElement(element: IrElement) {
         when (element) {
@@ -37,10 +39,5 @@ abstract class AnnotatedFunctionsIrTransformer(protected val context: IrPluginCo
         declaration.body = generateBodyForFunction(declaration)
         super.visitSimpleFunction(declaration)
     }
-
-    abstract fun generateBodyForFunction(function: IrSimpleFunction): IrBody?
-
-
-
 
 }
